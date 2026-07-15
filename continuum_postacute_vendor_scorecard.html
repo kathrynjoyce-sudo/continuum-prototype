@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Continuum — Post-Acute Network Scorecard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy: #1C3049; --navy-dark: #12202F; --sky: #61ADD2; --sky-light: #E7F1F8;
+    --orange: #DF823B; --orange-light: #FBEADC; --gray-bg: #F2F2F2; --gray: #545759;
+    --text: #1a1a18; --text-sub: #6b6d70; --border: rgba(0,0,0,0.10); --white: #ffffff;
+    --pos: #1E7145; --pos-light: #E5F3EA; --neg: #A32D2D; --neg-light: #FBEAEA;
+    --warn: #B5790C; --warn-light: #FBF0DC; --radius-md: 10px; --radius-lg: 14px;
+  }
+  body {
+    font-family: Arial, Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gray-bg); color: var(--text); font-size: 13px; line-height: 1.5;
+    min-height: 100vh; padding-bottom: 40px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+  .topbar { background: var(--navy); color: white; padding: 14px 0; margin-bottom: 22px; }
+  .topbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 30px; height: 30px; background: white; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .brand-name { font-size: 16px; font-weight: bold; }
+  .brand-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  .proto-badge { background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: bold; letter-spacing: 0.03em; text-transform: uppercase; }
+  .topbar-controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .tb-select { background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.35); color: white; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-family: inherit; outline: none; cursor: pointer; }
+  .tb-select option { color: var(--text); }
+  .btn-export { background: var(--orange); color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; font-family: inherit; }
+  .page-hdr { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; flex-wrap: wrap; gap: 8px; }
+  .page-title { font-size: 20px; font-weight: bold; color: var(--navy); }
+  .page-meta { font-size: 12px; color: var(--text-sub); }
+  .page-meta b { color: var(--text); }
+  .kpi-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi-card { background: white; border-radius: var(--radius-md); padding: 14px 16px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+  .kpi-lbl { font-size: 10.5px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.04em; font-weight: bold; margin-bottom: 6px; }
+  .kpi-val { font-size: 21px; font-weight: bold; color: var(--navy); line-height: 1.1; }
+  .kpi-sub { font-size: 11px; margin-top: 5px; font-weight: 500; }
+  .kpi-sub.pos { color: var(--pos); } .kpi-sub.neg { color: var(--neg); } .kpi-sub.neutral { color: var(--text-sub); }
+  .card { background: white; border-radius: var(--radius-lg); padding: 18px 20px; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(0,0,0,0.03); margin-bottom: 16px; }
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .card-title { font-size: 14px; font-weight: bold; color: var(--navy); }
+  .card-sub { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .row-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  .chart-box { position: relative; }
+  .chart-box.h280 { height: 280px; }
+  .chart-box.h240 { height: 240px; }
+  .filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .filter-select { border: 1px solid var(--border); background: white; padding: 6px 10px; border-radius: 7px; font-size: 11.5px; font-family: inherit; color: var(--text); cursor: pointer; }
+  table.sc-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.sc-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text-sub); padding: 8px 8px; border-bottom: 2px solid var(--border); font-weight: bold; cursor: pointer; user-select: none; white-space: nowrap; }
+  table.sc-table th:hover { color: var(--navy); }
+  table.sc-table th .sort-arrow { font-size: 9px; opacity: 0.5; margin-left: 2px; }
+  table.sc-table td { padding: 8px 8px; border-bottom: 1px solid var(--border); }
+  table.sc-table tr:last-child td { border-bottom: none; }
+  table.sc-table tr:hover td { background: var(--sky-light); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .tag.preferred { background: var(--pos-light); color: var(--pos); }
+  .tag.standard { background: var(--sky-light); color: #2C5A78; }
+  .tag.monitor { background: var(--warn-light); color: var(--warn); }
+  .tag.donotrefer { background: var(--neg-light); color: var(--neg); }
+  .stars { color: var(--orange); font-size: 12px; letter-spacing: 1px; }
+  .trend-up { color: var(--pos); font-weight: bold; }
+  .trend-down { color: var(--neg); font-weight: bold; }
+  .trend-flat { color: var(--text-sub); font-weight: bold; }
+  .legend-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--text-sub); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+  .alert-row { display: flex; gap: 10px; align-items: flex-start; border-left: 3px solid var(--warn); background: var(--warn-light); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .alert-row.crit { border-left-color: var(--neg); background: var(--neg-light); }
+  .alert-title { font-size: 12px; font-weight: bold; color: var(--text); margin-bottom: 2px; }
+  .alert-body { font-size: 11.5px; color: var(--text-sub); line-height: 1.5; }
+  .foot-note { font-size: 10.5px; color: var(--text-sub); text-align: center; margin-top: 24px; line-height: 1.6; }
+  @media (max-width: 1000px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .row-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 20 20" width="20" height="20" fill="none">
+          <path d="M3 15c0-6.5 3-11 7-11s7 4.5 7 11" stroke="#1C3049" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="3" cy="15" r="1.7" fill="#61ADD2"/>
+          <circle cx="10" cy="4" r="1.7" fill="#DF823B"/>
+          <circle cx="17" cy="15" r="1.7" fill="#61ADD2"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">continuum</div>
+        <div class="brand-sub">TEAM Episode Management</div>
+      </div>
+      <span class="proto-badge">Prototype · Illustrative Data</span>
+    </div>
+    <div class="topbar-controls">
+      <button class="btn-export" onclick="window.print()">Export / Print</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">Post-Acute Network Scorecard</div>
+      <div class="page-meta">Denver-Aurora-Lakewood, CO CBSA · <b id="vendorCountLabel">—</b> facilities tracked · Trailing 90 days</div>
+    </div>
+  </div>
+
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <div class="row-2">
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Value Quadrant — Cost vs. Readmission Rate</div>
+          <div class="card-sub">Bubble size = referral volume, trailing 90 days · reflects the type filter below</div>
+        </div>
+        <div class="filter-bar">
+          <select class="filter-select" id="quadTypeFilter" onchange="renderQuadrant()">
+            <option value="SNF">Skilled Nursing (SNF)</option>
+            <option value="Home Health">Home Health</option>
+            <option value="IRF">Inpatient Rehab (IRF)</option>
+            <option value="LTACH">Long-Term Acute Care</option>
+          </select>
+        </div>
+      </div>
+      <div class="chart-box h280"><canvas id="quadChart"></canvas></div>
+      <div class="legend-row">
+        <span><span class="legend-dot" style="background:#1E7145;"></span>Preferred</span>
+        <span><span class="legend-dot" style="background:#61ADD2;"></span>Standard</span>
+        <span><span class="legend-dot" style="background:#B5790C;"></span>Monitor</span>
+        <span><span class="legend-dot" style="background:#A32D2D;"></span>Do Not Refer</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div>
+          <div class="card-title">Network Composition</div>
+          <div class="card-sub">By tier, all facility types</div>
+        </div>
+      </div>
+      <div class="chart-box h240"><canvas id="tierChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div>
+        <div class="card-title">Network Alerts</div>
+        <div class="card-sub">Facilities flagged for tier review this cycle</div>
+      </div>
+    </div>
+    <div id="alertList"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div>
+        <div class="card-title">Facility Scorecard</div>
+        <div class="card-sub">Click any column to sort</div>
+      </div>
+      <div class="filter-bar">
+        <select class="filter-select" id="tableTypeFilter" onchange="renderTable()">
+          <option value="all">All facility types</option>
+          <option value="SNF">Skilled Nursing (SNF)</option>
+          <option value="Home Health">Home Health</option>
+          <option value="IRF">Inpatient Rehab (IRF)</option>
+          <option value="LTACH">Long-Term Acute Care</option>
+        </select>
+        <select class="filter-select" id="tableTierFilter" onchange="renderTable()">
+          <option value="all">All tiers</option>
+          <option value="Preferred">Preferred</option>
+          <option value="Standard">Standard</option>
+          <option value="Monitor">Monitor</option>
+          <option value="Do Not Refer">Do Not Refer</option>
+        </select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="sc-table" id="vendorTable"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr"><div class="card-title">How Tiers Are Set</div></div>
+    <div style="font-size:11.5px;color:var(--text-sub);line-height:1.7;">
+      <b style="color:var(--pos);">Preferred</b> — top-quartile network performance on 30-day readmission rate and cost/day, CMS star rating of 4+ where applicable, and sufficient capacity for priority referrals.<br/>
+      <b style="color:#2C5A78;">Standard</b> — meets network minimums; eligible for referrals but not prioritized over Preferred-tier facilities.<br/>
+      <b style="color:var(--warn);">Monitor</b> — one or more metrics trending outside network thresholds; referrals continue with added care-navigator oversight.<br/>
+      <b style="color:var(--neg);">Do Not Refer</b> — below minimum performance thresholds; referrals paused pending a formal performance review.
+    </div>
+  </div>
+
+  <div class="foot-note">
+    Continuum — TEAM Episode Management &nbsp;·&nbsp; This is a prototype scorecard built with illustrative sample data for demonstration purposes. Facility names are fictional.<br/>
+    Post-acute network performance is the largest single driver of episode cost variation under the CMS TEAM model.
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const VENDORS = [
+  { name:"Cherry Creek Rehabilitation & Care", type:"SNF", tier:"Preferred", star:5.0, referrals:42, los:14, cost:480, readmit:7.8, d2c:71, trend:"up" },
+  { name:"Foothills Transitional Care", type:"SNF", tier:"Preferred", star:4.0, referrals:38, los:15, cost:505, readmit:8.9, d2c:68, trend:"flat" },
+  { name:"Lakewood Post-Acute Center", type:"SNF", tier:"Preferred", star:4.0, referrals:31, los:16, cost:520, readmit:9.4, d2c:65, trend:"up" },
+  { name:"Mile High Skilled Nursing", type:"SNF", tier:"Standard", star:3.0, referrals:27, los:18, cost:560, readmit:11.2, d2c:58, trend:"flat" },
+  { name:"Stapleton Rehabilitation Center", type:"SNF", tier:"Standard", star:3.0, referrals:22, los:19, cost:585, readmit:12.1, d2c:55, trend:"down" },
+  { name:"Green Valley Care Center", type:"SNF", tier:"Standard", star:3.0, referrals:19, los:20, cost:600, readmit:12.8, d2c:53, trend:"flat" },
+  { name:"Parkview Health & Rehab", type:"SNF", tier:"Standard", star:3.0, referrals:17, los:18, cost:570, readmit:11.6, d2c:56, trend:"up" },
+  { name:"Centennial Post-Acute", type:"SNF", tier:"Monitor", star:2.0, referrals:14, los:22, cost:630, readmit:15.4, d2c:47, trend:"down" },
+  { name:"Aurora Highlands Nursing & Rehab", type:"SNF", tier:"Monitor", star:2.0, referrals:11, los:23, cost:645, readmit:16.1, d2c:45, trend:"down" },
+  { name:"Riverside Care & Rehabilitation", type:"SNF", tier:"Do Not Refer", star:1.0, referrals:4, los:26, cost:690, readmit:19.3, d2c:38, trend:"down" },
+  { name:"Front Range Home Health", type:"Home Health", tier:"Preferred", star:4.5, referrals:48, los:21, cost:135, readmit:6.2, d2c:92, trend:"up" },
+  { name:"Bluepeak Home Health", type:"Home Health", tier:"Preferred", star:4.0, referrals:40, los:19, cost:145, readmit:7.1, d2c:90, trend:"flat" },
+  { name:"Rocky Mountain Home Care", type:"Home Health", tier:"Standard", star:3.5, referrals:29, los:20, cost:165, readmit:9.4, d2c:85, trend:"flat" },
+  { name:"Summit Home Health Services", type:"Home Health", tier:"Standard", star:3.0, referrals:21, los:22, cost:180, readmit:10.8, d2c:81, trend:"down" },
+  { name:"Denver Metro Home Health", type:"Home Health", tier:"Monitor", star:2.5, referrals:9, los:24, cost:210, readmit:13.6, d2c:74, trend:"down" },
+  { name:"Highline Rehabilitation Hospital", type:"IRF", tier:"Preferred", star:null, referrals:16, los:12, cost:1180, readmit:9.8, d2c:79, trend:"up" },
+  { name:"Peak Inpatient Rehabilitation", type:"IRF", tier:"Standard", star:null, referrals:11, los:13, cost:1290, readmit:11.9, d2c:74, trend:"flat" },
+  { name:"Continental Divide Rehab Hospital", type:"IRF", tier:"Monitor", star:null, referrals:6, los:15, cost:1420, readmit:14.7, d2c:68, trend:"down" },
+  { name:"South Metro Long-Term Acute Care", type:"LTACH", tier:"Standard", star:null, referrals:5, los:24, cost:1680, readmit:15.2, d2c:61, trend:"flat" },
+  { name:"Denver LTAC Center", type:"LTACH", tier:"Monitor", star:null, referrals:3, los:28, cost:1850, readmit:18.9, d2c:54, trend:"down" },
+];
+
+const ALERTS = [
+  { crit:true, title:"Riverside Care & Rehabilitation — referrals paused", body:"Readmission rate of 19.3% is more than 8 points above the network average. Referrals have been paused since May 2026 pending a formal performance review." },
+  { crit:false, title:"Aurora Highlands Nursing & Rehab — trending down", body:"Cost/day is up $40 and readmissions are up 1.8 points over the last quarter. Recommend a check-in before the next tier review cycle." },
+  { crit:false, title:"Denver LTAC Center — highest network cost, low volume", body:"Highest cost/day in the network with a below-threshold discharge-to-community rate. Volume is low — recommend confirming continued referrals are clinically necessary." },
+];
+
+const TIER_COLOR = { "Preferred":"#1E7145", "Standard":"#61ADD2", "Monitor":"#B5790C", "Do Not Refer":"#A32D2D" };
+const TIER_CLASS = { "Preferred":"preferred", "Standard":"standard", "Monitor":"monitor", "Do Not Refer":"donotrefer" };
+const TREND_ARROW = { up:'<span class="trend-up">▲</span>', down:'<span class="trend-down">▼</span>', flat:'<span class="trend-flat">—</span>' };
+
+let sortState = { key: "referrals", dir: -1 };
+let quadChartObj = null, tierChartObj = null;
+
+function fmtStars(v) {
+  if (v == null) return '<span style="color:var(--text-sub);font-size:11px;">N/A</span>';
+  const full = Math.floor(v), half = v % 1 >= 0.5;
+  let s = '★'.repeat(full) + (half ? '½' : '') ;
+  return `<span class="stars">${s}</span> <span style="color:var(--text-sub);font-size:10.5px;">${v.toFixed(1)}</span>`;
+}
+
+function renderKPIs() {
+  const total = VENDORS.length;
+  const preferred = VENDORS.filter(v => v.tier === "Preferred").length;
+  const avgReadmit = (VENDORS.reduce((s,v)=>s+v.readmit,0) / total).toFixed(1);
+  const snf = VENDORS.filter(v => v.type === "SNF");
+  const avgSnfCost = Math.round(snf.reduce((s,v)=>s+v.cost,0) / snf.length);
+  const avgD2C = Math.round(VENDORS.reduce((s,v)=>s+v.d2c,0) / total);
+
+  const cards = [
+    { lbl:"Network Facilities Tracked", val: total, sub: preferred + " Preferred tier", cls:"neutral" },
+    { lbl:"Preferred-Tier Vendors", val: preferred + " / " + total, sub: Math.round(preferred/total*100) + "% of network", cls:"pos" },
+    { lbl:"Network Avg. 30-Day Readmission", val: avgReadmit + "%", sub: "vs. 14.2% out-of-network benchmark", cls:"pos" },
+    { lbl:"SNF Avg. Cost / Day", val: "$" + avgSnfCost, sub: "vs. $610 regional benchmark", cls:"pos" },
+    { lbl:"Avg. Discharge-to-Community", val: avgD2C + "%", sub: "across all facility types", cls:"pos" },
+  ];
+  document.getElementById('kpiGrid').innerHTML = cards.map(c => `
+    <div class="kpi-card">
+      <div class="kpi-lbl">${c.lbl}</div>
+      <div class="kpi-val">${c.val}</div>
+      <div class="kpi-sub ${c.cls}">${c.sub}</div>
+    </div>`).join('');
+  document.getElementById('vendorCountLabel').textContent = total;
+}
+
+function renderAlerts() {
+  document.getElementById('alertList').innerHTML = ALERTS.map(a => `
+    <div class="alert-row ${a.crit ? 'crit':''}">
+      <div>
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-body">${a.body}</div>
+      </div>
+    </div>`).join('');
+}
+
+function renderQuadrant() {
+  const type = document.getElementById('quadTypeFilter').value;
+  const subset = VENDORS.filter(v => v.type === type);
+  const byTier = {};
+  subset.forEach(v => {
+    if (!byTier[v.tier]) byTier[v.tier] = [];
+    byTier[v.tier].push({ x: v.cost, y: v.readmit, r: Math.max(6, Math.sqrt(v.referrals) * 3.2), name: v.name, referrals: v.referrals });
+  });
+  const datasets = Object.keys(byTier).map(tier => ({
+    label: tier,
+    data: byTier[tier],
+    backgroundColor: TIER_COLOR[tier] + "B3",
+    borderColor: TIER_COLOR[tier],
+    borderWidth: 1.5,
+  }));
+
+  if (quadChartObj) quadChartObj.destroy();
+  quadChartObj = new Chart(document.getElementById('quadChart'), {
+    type: 'bubble',
+    data: { datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => {
+          const p = ctx.raw;
+          return `${p.name}: $${p.x}/day, ${p.y}% readmit, ${p.referrals} referrals`;
+        } } },
+      },
+      scales: {
+        x: { title: { display:true, text:'Cost / day ($)', font:{size:11} }, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:10.5}} },
+        y: { title: { display:true, text:'30-day readmission rate (%)', font:{size:11} }, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{font:{size:10.5}} },
+      }
+    }
+  });
+}
+
+function renderTierChart() {
+  const counts = { "Preferred":0, "Standard":0, "Monitor":0, "Do Not Refer":0 };
+  VENDORS.forEach(v => counts[v.tier]++);
+  if (tierChartObj) tierChartObj.destroy();
+  tierChartObj = new Chart(document.getElementById('tierChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => TIER_COLOR[k]) }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{position:'right', labels:{boxWidth:10, font:{size:10.5}}}} }
+  });
+}
+
+function sortVendors(list) {
+  const { key, dir } = sortState;
+  return [...list].sort((a,b) => {
+    let av = a[key], bv = b[key];
+    if (key === 'star') { av = av==null?-1:av; bv = bv==null?-1:bv; }
+    if (typeof av === 'string') return av.localeCompare(bv) * dir;
+    return (av - bv) * dir;
+  });
+}
+
+function setSort(key) {
+  if (sortState.key === key) sortState.dir *= -1;
+  else { sortState.key = key; sortState.dir = key==='name'?1:-1; }
+  renderTable();
+}
+
+function renderTable() {
+  const typeF = document.getElementById('tableTypeFilter').value;
+  const tierF = document.getElementById('tableTierFilter').value;
+  let list = VENDORS.filter(v => (typeF==='all'||v.type===typeF) && (tierF==='all'||v.tier===tierF));
+  list = sortVendors(list);
+
+  const cols = [
+    { key:'name', label:'Facility' },
+    { key:'type', label:'Type' },
+    { key:'tier', label:'Tier' },
+    { key:'star', label:'CMS Stars' },
+    { key:'referrals', label:'Referrals (90d)' },
+    { key:'los', label:'Avg. LOS' },
+    { key:'cost', label:'Cost / Day' },
+    { key:'readmit', label:'30-Day Readmit' },
+    { key:'d2c', label:'Discharge-to-Community' },
+    { key:'trend', label:'Trend' },
+  ];
+  const arrow = k => sortState.key===k ? `<span class="sort-arrow">${sortState.dir===1?'▲':'▼'}</span>` : '';
+
+  const head = `<thead><tr>${cols.map(c => `<th onclick="setSort('${c.key}')">${c.label}${arrow(c.key)}</th>`).join('')}</tr></thead>`;
+  const body = list.map(v => `
+    <tr>
+      <td>${v.name}</td>
+      <td>${v.type}</td>
+      <td><span class="tag ${TIER_CLASS[v.tier]}">${v.tier}</span></td>
+      <td>${fmtStars(v.star)}</td>
+      <td class="num">${v.referrals}</td>
+      <td class="num">${v.los}d</td>
+      <td class="num">$${v.cost}</td>
+      <td class="num">${v.readmit}%</td>
+      <td class="num">${v.d2c}%</td>
+      <td class="num">${TREND_ARROW[v.trend]}</td>
+    </tr>`).join('');
+
+  document.getElementById('vendorTable').innerHTML = head + `<tbody>${body}</tbody>`;
+}
+
+function renderAll() {
+  renderKPIs();
+  renderAlerts();
+  renderQuadrant();
+  renderTierChart();
+  renderTable();
+}
+
+renderAll();
+</script>
+</body>
+</html>
