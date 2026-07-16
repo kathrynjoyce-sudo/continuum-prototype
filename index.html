@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Continuum — TEAM Prototype Dashboards</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, Helvetica, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #F2F2F2; color: #1a1a18; min-height: 100vh;
+  }
+  .topbar { background: #1C3049; color: white; padding: 16px 0; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+  .topbar-inner { display: flex; align-items: center; gap: 10px; }
+  .brand-mark { width: 32px; height: 32px; background: white; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .brand-name { font-size: 17px; font-weight: bold; }
+  .brand-sub { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+  .hero { padding: 40px 0 8px; }
+  .hero h1 { font-size: 24px; color: #1C3049; margin-bottom: 8px; }
+  .hero p { font-size: 13.5px; color: #6b6d70; line-height: 1.6; max-width: 640px; }
+  .badge {
+    display: inline-block; margin-top: 10px; background: #FBEADC; color: #DF823B;
+    font-size: 10.5px; font-weight: bold; padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; padding: 28px 0 48px; }
+  a.card {
+    display: block; background: white; border-radius: 14px; padding: 22px;
+    border: 1px solid rgba(0,0,0,0.10); text-decoration: none; color: inherit;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: box-shadow 0.15s, transform 0.15s;
+  }
+  a.card:hover { box-shadow: 0 4px 14px rgba(28,48,73,0.12); transform: translateY(-2px); }
+  .card-icon {
+    width: 38px; height: 38px; border-radius: 9px; background: #E7F1F8;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+    font-size: 18px;
+  }
+  .card h2 { font-size: 15px; color: #1C3049; margin-bottom: 6px; }
+  .card p { font-size: 12px; color: #6b6d70; line-height: 1.55; margin-bottom: 12px; }
+  .card .go { font-size: 11.5px; color: #DF823B; font-weight: bold; }
+  .foot { font-size: 10.5px; color: #6b6d70; text-align: center; padding-bottom: 32px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="wrap topbar-inner">
+    <div class="brand-mark">
+      <svg viewBox="0 0 20 20" width="20" height="20" fill="none">
+        <path d="M3 15c0-6.5 3-11 7-11s7 4.5 7 11" stroke="#1C3049" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="3" cy="15" r="1.7" fill="#61ADD2"/>
+        <circle cx="10" cy="4" r="1.7" fill="#DF823B"/>
+        <circle cx="17" cy="15" r="1.7" fill="#61ADD2"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">continuum</div>
+      <div class="brand-sub">TEAM Episode Management</div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>Prototype Dashboards</h1>
+    <p>Four working prototypes built for CMS TEAM episode management — an internal care-management workspace, a hospital-facing performance scorecard, a post-acute network scorecard, and an episode-level KPI framework. Click through to any one below.</p>
+    <span class="badge">Prototype · Illustrative Data</span>
+  </div>
+
+  <div class="cards">
+    <a class="card" href="continuum_care_dashboard.html">
+      <div class="card-icon">🗂️</div>
+      <h2>Care Management Dashboard</h2>
+      <p>Day-to-day care navigator workspace: caseload, calendar, interactions, goals, care gaps, and medication reconciliation for TEAM surgical episodes.</p>
+      <span class="go">Open dashboard →</span>
+    </a>
+    <a class="card" href="continuum_hospital_scorecard.html">
+      <div class="card-icon">🏥</div>
+      <h2>Hospital Performance Scorecard</h2>
+      <p>Client-facing view of episode volume, target vs. actual spend, reconciliation estimates, and quality performance by hospital.</p>
+      <span class="go">Open scorecard →</span>
+    </a>
+    <a class="card" href="continuum_postacute_vendor_scorecard.html">
+      <div class="card-icon">📋</div>
+      <h2>Post-Acute Vendor Scorecard</h2>
+      <p>Network ranking of SNF, home health, IRF, and LTACH partners by cost, readmission rate, and discharge-to-community outcomes.</p>
+      <span class="go">Open scorecard →</span>
+    </a>
+    <a class="card" href="continuum_team_episode_kpi_dashboard.html">
+      <div class="card-icon">📊</div>
+      <h2>TEAM Episode KPI Framework</h2>
+      <p>Detailed KPI catalog for CABG and Major Bowel Procedure — readmission, clinical quality, financial, and nurse engagement metrics per episode type.</p>
+      <span class="go">Open framework →</span>
+    </a>
+  </div>
+
+  <div class="foot">
+    Continuum — TEAM Episode Management &nbsp;·&nbsp; All figures shown across these prototypes are illustrative sample data for demonstration purposes.
+  </div>
+</div>
+</body>
+</html>
